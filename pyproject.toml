@@ -1,0 +1,17 @@
+[project]
+name = "litellm-vl-router"
+version = "0.1.0"
+description = "LiteLLM gateway that routes Cline vision requests to Qwen while keeping text/code on DeepSeek"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0,<9.0",
+  "pyyaml>=6.0,<7.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra"

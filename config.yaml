@@ -1,0 +1,74 @@
+model_list:
+  # Public IDs shown in Cline. Text/code stays on the selected DeepSeek model.
+  - model_name: deepseek-v4-flash-vl
+    litellm_params:
+      model: os.environ/DEEPSEEK_FLASH_MODEL
+      api_base: os.environ/DEEPSEEK_API_BASE
+      api_key: os.environ/DEEPSEEK_API_KEY
+      timeout: 180
+    model_info:
+      mode: chat
+      description: "DeepSeek V4 Flash for text/code; image inputs auto-route to Qwen 3.5 Flash"
+
+  - model_name: deepseek-v4-pro-vl
+    litellm_params:
+      model: os.environ/DEEPSEEK_PRO_MODEL
+      api_base: os.environ/DEEPSEEK_API_BASE
+      api_key: os.environ/DEEPSEEK_API_KEY
+      timeout: 180
+    model_info:
+      mode: chat
+      description: "DeepSeek V4 Pro for text/code; image inputs auto-route to Qwen 3.5 Flash"
+
+  # Internal target used by app.custom_handler.vl_router.
+  - model_name: _internal-qwen3.5-flash-vision
+    litellm_params:
+      model: os.environ/QWEN_VISION_MODEL
+      api_base: os.environ/QWEN_API_BASE
+      api_key: os.environ/QWEN_API_KEY
+      timeout: 180
+    model_info:
+      mode: chat
+      description: "Internal vision target; do not select directly in Cline"
+
+litellm_settings:
+  callbacks: app.custom_handler.vl_router
+  drop_params: true
+  request_timeout: 180
+  json_logs: true
+  turn_off_message_logging: true
+  redact_user_api_key_info: true
+  cache: true
+  cache_params:
+    type: redis
+    host: os.environ/REDIS_HOST
+    port: os.environ/REDIS_PORT
+    password: os.environ/REDIS_PASSWORD
+    namespace: litellm-vl-router
+    mode: default_off
+    ttl: 600
+  enable_redis_auth_cache: true
+
+router_settings:
+  routing_strategy: simple-shuffle
+  redis_host: os.environ/REDIS_HOST
+  redis_port: os.environ/REDIS_PORT
+  redis_password: os.environ/REDIS_PASSWORD
+  enable_pre_call_checks: true
+  allowed_fails: 3
+  cooldown_time: 30
+  retry_policy:
+    AuthenticationErrorRetries: 0
+    TimeoutErrorRetries: 2
+    RateLimitErrorRetries: 2
+    InternalServerErrorRetries: 2
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  database_connection_pool_limit: 10
+  database_connection_timeout: 60
+  store_prompts_in_spend_logs: false
+  disable_master_key_return: true
+  background_health_checks: true
+  health_check_interval: 300
