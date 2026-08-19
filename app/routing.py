@@ -34,11 +34,29 @@ def _walk(value: Any):
             yield from _walk(child)
 
 
+def _latest_user_scope(value: Any) -> Any:
+    """Return the latest user turn, or the raw value for role-less Responses input."""
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
+        return value
+
+    for item in reversed(value):
+        if isinstance(item, Mapping) and str(item.get("role", "")).lower() == "user":
+            return item
+
+    # Responses API can pass content parts directly without role wrappers.
+    return value
+
+
 def contains_vision_input(data: Mapping[str, Any]) -> bool:
-    """Return True when a chat/responses payload contains an image input part."""
+    """Return True when the current user turn contains an image input part.
+
+    Older screenshots are intentionally ignored after a newer text-only user turn.
+    Tool-result continuations still see the latest user turn and stay on the same
+    vision model until that turn completes.
+    """
     request_content = {
-        "messages": data.get("messages", []),
-        "input": data.get("input", []),
+        "messages": _latest_user_scope(data.get("messages", [])),
+        "input": _latest_user_scope(data.get("input", [])),
     }
     for item in _walk(request_content):
         if not isinstance(item, Mapping):

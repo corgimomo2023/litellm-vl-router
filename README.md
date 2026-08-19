@@ -5,7 +5,7 @@ A Docker Compose LiteLLM gateway for Cline with two public model IDs:
 - `deepseek-v4-flash-vl`
 - `deepseek-v4-pro-vl`
 
-Text and code requests use the selected DeepSeek model. When Cline includes an image, a LiteLLM `async_pre_call_hook` routes the request to Qwen 3.5 Flash for vision understanding.
+Text and code requests use the selected DeepSeek model. When Cline's latest user turn includes an image, a LiteLLM `async_pre_call_hook` routes that turn (including its tool-result continuations) to Qwen 3.5 Flash for vision understanding. A historical screenshot does not keep later text-only user turns pinned to Qwen.
 
 > The `-vl` names are gateway aliases. They do not claim that the upstream DeepSeek models are vision models.
 

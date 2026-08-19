@@ -47,6 +47,61 @@ def test_plain_code_request_is_not_vision():
     assert contains_vision_input(payload) is False
 
 
+def test_old_screenshot_does_not_keep_routing_new_text_turns_to_qwen():
+    payload = {
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Explain this screenshot"},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": "https://example.com/old.png"},
+                    },
+                ],
+            },
+            {"role": "assistant", "content": "The screenshot shows an error."},
+            {"role": "user", "content": "Now inspect package.json and fix the code."},
+        ]
+    }
+
+    assert contains_vision_input(payload) is False
+    assert (
+        route_model(payload | {"model": "deepseek-v4-flash-vl"}, "acompletion")
+        == "deepseek-v4-flash-vl"
+    )
+
+
+def test_tool_continuation_of_latest_image_turn_stays_on_vision_model():
+    payload = {
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Inspect this screenshot"},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": "https://example.com/current.png"},
+                    },
+                ],
+            },
+            {
+                "role": "assistant",
+                "tool_calls": [
+                    {
+                        "id": "call_1",
+                        "type": "function",
+                        "function": {"name": "read_file", "arguments": "{}"},
+                    }
+                ],
+            },
+            {"role": "tool", "tool_call_id": "call_1", "content": "{}"},
+        ]
+    }
+
+    assert contains_vision_input(payload) is True
+
+
 @pytest.mark.parametrize(
     "public_model",
     ["deepseek-v4-flash-vl", "deepseek-v4-pro-vl"],
