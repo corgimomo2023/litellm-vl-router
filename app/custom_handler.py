@@ -1,4 +1,4 @@
-"""LiteLLM proxy hook that sends image inputs to the Qwen vision model."""
+"""LiteLLM proxy hook that sends current-turn image inputs to GPT Luna."""
 
 from __future__ import annotations
 

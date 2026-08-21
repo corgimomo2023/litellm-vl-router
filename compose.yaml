@@ -1,5 +1,11 @@
 name: litellm-vl-router
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -15,6 +21,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+          cpus: "1.00"
+    logging: *default-logging
     networks: [backend]
 
   redis:
@@ -30,6 +42,12 @@ services:
       retries: 20
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+    logging: *default-logging
     networks: [backend]
 
   litellm:
@@ -41,10 +59,11 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://litellm:${POSTGRES_PASSWORD}@postgres:5432/litellm
+      DATABASE_URL: postgresql://litellm:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/litellm
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:?set LITELLM_SALT_KEY in .env}
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}
     ports:
       - "127.0.0.1:${LITELLM_PORT:-4000}:4000"
     depends_on:
@@ -58,6 +77,12 @@ services:
       timeout: 10s
       retries: 30
       start_period: 90s
+    deploy:
+      resources:
+        limits:
+          memory: 3072M
+          cpus: "2.00"
+    logging: *default-logging
     networks: [backend]
 
 volumes:

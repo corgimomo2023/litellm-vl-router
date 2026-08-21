@@ -1,42 +1,35 @@
 model_list:
-  # Public IDs shown in Cline. Text/code stays on the selected DeepSeek model.
-  - model_name: deepseek-v4-flash-vl
+  # The only public OpenAI-compatible model ID. Text/code uses OpenCode Go.
+  - model_name: DeepSeek-v4-vl
     litellm_params:
-      model: os.environ/DEEPSEEK_FLASH_MODEL
-      api_base: os.environ/DEEPSEEK_API_BASE
-      api_key: os.environ/DEEPSEEK_API_KEY
+      model: os.environ/OPENCODE_GO_MODEL
+      api_base: os.environ/OPENCODE_GO_API_BASE
+      api_key: os.environ/OPENCODE_GO_API_KEY
       timeout: 180
     model_info:
       mode: chat
-      description: "DeepSeek V4 Flash for text/code; image inputs auto-route to Qwen 3.5 Flash"
+      description: "DeepSeek V4 Flash text/code via OpenCode Go; current-turn images auto-route to GPT Luna"
 
-  - model_name: deepseek-v4-pro-vl
+  # Internal target used by app.custom_handler.vl_router; do not expose to clients.
+  - model_name: _internal-gpt-luna-vision
     litellm_params:
-      model: os.environ/DEEPSEEK_PRO_MODEL
-      api_base: os.environ/DEEPSEEK_API_BASE
-      api_key: os.environ/DEEPSEEK_API_KEY
+      model: os.environ/GPT_LUNA_MODEL
+      api_base: os.environ/GPT_LUNA_API_BASE
+      api_key: os.environ/GPT_LUNA_API_KEY
       timeout: 180
     model_info:
       mode: chat
-      description: "DeepSeek V4 Pro for text/code; image inputs auto-route to Qwen 3.5 Flash"
-
-  # Internal target used by app.custom_handler.vl_router.
-  - model_name: _internal-qwen3.5-flash-vision
-    litellm_params:
-      model: os.environ/QWEN_VISION_MODEL
-      api_base: os.environ/QWEN_API_BASE
-      api_key: os.environ/QWEN_API_KEY
-      timeout: 180
-    model_info:
-      mode: chat
-      description: "Internal vision target; do not select directly in Cline"
+      description: "Internal GPT Luna vision target"
 
 litellm_settings:
   callbacks: app.custom_handler.vl_router
   drop_params: true
   request_timeout: 180
+  num_retries: 2
   json_logs: true
-  turn_off_message_logging: true
+  # WARNING: payload logging can contain source code, images, PII, and secrets.
+  # Keep this enabled only when operators accept that spend logs retain content.
+  turn_off_message_logging: false
   redact_user_api_key_info: true
   cache: true
   cache_params:
@@ -63,12 +56,16 @@ router_settings:
     RateLimitErrorRetries: 2
     InternalServerErrorRetries: 2
 
+# Master/salt keys and database URL are supplied only through environment variables.
+# LITELLM_SALT_KEY must stay stable after the first database initialization.
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   database_url: os.environ/DATABASE_URL
   database_connection_pool_limit: 10
   database_connection_timeout: 60
-  store_prompts_in_spend_logs: false
+  # WARNING: stores request/response content in spend logs; protect DB backups/access.
+  store_prompts_in_spend_logs: true
+  disable_spend_logs: false
   disable_master_key_return: true
   background_health_checks: true
   health_check_interval: 300
