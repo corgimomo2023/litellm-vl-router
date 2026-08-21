@@ -1,7 +1,7 @@
 [project]
 name = "litellm-vl-router"
 version = "0.1.0"
-description = "LiteLLM gateway that routes Cline vision requests to Qwen while keeping text/code on DeepSeek"
+description = "LiteLLM gateway routing DeepSeek-v4-vl text through OpenCode Go and current-turn images through GPT Luna"
 requires-python = ">=3.10"
 dependencies = []
 

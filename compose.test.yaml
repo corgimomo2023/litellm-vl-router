@@ -13,13 +13,12 @@ services:
 
   litellm:
     environment:
-      DEEPSEEK_API_KEY: test-deepseek-key
-      DEEPSEEK_API_BASE: http://mock-provider:8080/deepseek/v1
-      DEEPSEEK_FLASH_MODEL: openai/deepseek-v4-flash
-      DEEPSEEK_PRO_MODEL: openai/deepseek-v4-pro
-      QWEN_API_KEY: test-qwen-key
-      QWEN_API_BASE: http://mock-provider:8080/qwen/v1
-      QWEN_VISION_MODEL: openai/qwen3.5-flash
+      OPENCODE_GO_API_KEY: test-opencode-go-key
+      OPENCODE_GO_API_BASE: http://mock-provider:8080/opencode-go/v1
+      OPENCODE_GO_MODEL: openai/deepseek-v4-flash
+      GPT_LUNA_API_KEY: test-gpt-luna-key
+      GPT_LUNA_API_BASE: http://mock-provider:8080/gpt-luna/v1
+      GPT_LUNA_MODEL: openai/gpt-luna-vision
     depends_on:
       mock-provider:
         condition: service_healthy

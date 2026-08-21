@@ -5,13 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-PUBLIC_MODELS = frozenset(
-    {
-        "deepseek-v4-flash-vl",
-        "deepseek-v4-pro-vl",
-    }
-)
-QWEN_VISION_ALIAS = "_internal-qwen3.5-flash-vision"
+PUBLIC_MODEL = "DeepSeek-v4-vl"
+PUBLIC_MODELS = frozenset({PUBLIC_MODEL})
+GPT_LUNA_VISION_ALIAS = "_internal-gpt-luna-vision"
 _CHAT_CALL_TYPES = frozenset(
     {
         "completion",
@@ -75,5 +71,5 @@ def route_model(data: Mapping[str, Any], call_type: str) -> str:
         and selected_model in PUBLIC_MODELS
         and contains_vision_input(data)
     ):
-        return QWEN_VISION_ALIAS
+        return GPT_LUNA_VISION_ALIAS
     return selected_model

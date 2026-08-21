@@ -1,0 +1,59 @@
+# Generic LiteLLM public reverse-proxy template.
+# deploy/install-nginx.sh replaces the __...__ placeholders.
+
+limit_req_zone $binary_remote_addr zone=llmproxy_api_per_ip:10m rate=60r/m;
+limit_conn_zone $binary_remote_addr zone=llmproxy_conn_per_ip:10m;
+
+server {
+    listen 80;
+    server_name __DOMAIN__;
+    return 301 https://__DOMAIN__$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name __DOMAIN__;
+
+    ssl_certificate     __SSL_CERT__;
+    ssl_certificate_key __SSL_KEY__;
+
+    client_max_body_size 50m;
+
+    location = / {
+        return 302 /ui/;
+    }
+
+    location ^~ /v1/ {
+        limit_req zone=llmproxy_api_per_ip burst=30 nodelay;
+        limit_conn llmproxy_conn_per_ip 20;
+
+        proxy_pass http://127.0.0.1:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Authorization $http_authorization;
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_read_timeout 600s;
+        proxy_send_timeout 600s;
+    }
+
+    # LiteLLM UI, login, management APIs and health endpoints remain protected
+    # by LiteLLM's own UI/admin/API authentication.
+    location / {
+        proxy_pass http://127.0.0.1:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_buffering off;
+        proxy_read_timeout 600s;
+        proxy_send_timeout 600s;
+    }
+}

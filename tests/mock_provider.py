@@ -17,10 +17,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         length = int(self.headers.get("content-length", "0"))
         request = json.loads(self.rfile.read(length) or b"{}")
-        if "/deepseek/" in self.path:
-            provider = "deepseek"
-        elif "/qwen/" in self.path:
-            provider = "qwen"
+        if "/opencode-go/" in self.path:
+            provider = "opencode-go"
+        elif "/gpt-luna/" in self.path:
+            provider = "gpt-luna"
         else:
             self._send(404, {"error": "unknown provider path"})
             return

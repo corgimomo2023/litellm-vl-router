@@ -1,6 +1,11 @@
 import pytest
 
-from app.routing import QWEN_VISION_ALIAS, contains_vision_input, route_model
+from app.routing import (
+    GPT_LUNA_VISION_ALIAS,
+    PUBLIC_MODEL,
+    contains_vision_input,
+    route_model,
+)
 
 
 @pytest.mark.parametrize(
@@ -47,8 +52,9 @@ def test_plain_code_request_is_not_vision():
     assert contains_vision_input(payload) is False
 
 
-def test_old_screenshot_does_not_keep_routing_new_text_turns_to_qwen():
+def test_old_screenshot_routes_new_text_turn_to_public_opencode_alias():
     payload = {
+        "model": PUBLIC_MODEL,
         "messages": [
             {
                 "role": "user",
@@ -62,18 +68,16 @@ def test_old_screenshot_does_not_keep_routing_new_text_turns_to_qwen():
             },
             {"role": "assistant", "content": "The screenshot shows an error."},
             {"role": "user", "content": "Now inspect package.json and fix the code."},
-        ]
+        ],
     }
 
     assert contains_vision_input(payload) is False
-    assert (
-        route_model(payload | {"model": "deepseek-v4-flash-vl"}, "acompletion")
-        == "deepseek-v4-flash-vl"
-    )
+    assert route_model(payload, "acompletion") == PUBLIC_MODEL
 
 
 def test_tool_continuation_of_latest_image_turn_stays_on_vision_model():
     payload = {
+        "model": PUBLIC_MODEL,
         "messages": [
             {
                 "role": "user",
@@ -96,20 +100,17 @@ def test_tool_continuation_of_latest_image_turn_stays_on_vision_model():
                 ],
             },
             {"role": "tool", "tool_call_id": "call_1", "content": "{}"},
-        ]
+        ],
     }
 
     assert contains_vision_input(payload) is True
+    assert route_model(payload, "acompletion") == GPT_LUNA_VISION_ALIAS
 
 
-@pytest.mark.parametrize(
-    "public_model",
-    ["deepseek-v4-flash-vl", "deepseek-v4-pro-vl"],
-)
-@pytest.mark.parametrize("call_type", ["completion", "acompletion"])
-def test_both_public_models_route_vision_to_qwen(public_model, call_type):
+@pytest.mark.parametrize("call_type", ["completion", "acompletion", "responses", "aresponses"])
+def test_public_model_routes_current_image_to_gpt_luna(call_type):
     payload = {
-        "model": public_model,
+        "model": PUBLIC_MODEL,
         "messages": [
             {
                 "role": "user",
@@ -120,29 +121,22 @@ def test_both_public_models_route_vision_to_qwen(public_model, call_type):
         ],
     }
 
-    assert route_model(payload, call_type=call_type) == QWEN_VISION_ALIAS
+    assert route_model(payload, call_type=call_type) == GPT_LUNA_VISION_ALIAS
 
 
-@pytest.mark.parametrize(
-    "public_model",
-    ["deepseek-v4-flash-vl", "deepseek-v4-pro-vl"],
-)
-def test_text_requests_keep_the_selected_deepseek_model(public_model):
+def test_text_request_keeps_public_model_for_opencode_go_backend():
     payload = {
-        "model": public_model,
+        "model": PUBLIC_MODEL,
         "messages": [{"role": "user", "content": "Implement a rate limiter"}],
     }
 
-    assert route_model(payload, call_type="completion") == public_model
+    assert route_model(payload, call_type="completion") == PUBLIC_MODEL
 
 
 def test_non_chat_calls_are_not_redirected_to_vision_model():
-    payload = {
-        "model": "deepseek-v4-pro-vl",
-        "prompt": "Generate an image of a corgi",
-    }
+    payload = {"model": PUBLIC_MODEL, "prompt": "Generate an image of a corgi"}
 
-    assert route_model(payload, call_type="image_generation") == "deepseek-v4-pro-vl"
+    assert route_model(payload, call_type="image_generation") == PUBLIC_MODEL
 
 
 def test_unknown_model_is_not_rewritten():
